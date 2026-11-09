@@ -1,5 +1,5 @@
 """Три таблиці фінальної схеми погодної бази."""
-from sqlalchemy import Column, DateTime, Enum, Double, ForeignKey, Integer, String, Time
+from sqlalchemy import Boolean, Column, DateTime, Enum, Double, ForeignKey, Integer, String, Time
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -31,6 +31,7 @@ class Wind(Base):
     )
     gust_mph = Column(Double, nullable=False)
     gust_kph = Column(Double, nullable=False)
+    go_outside = Column(Boolean, nullable=False)
 
 
 class AirQuality(Base):
@@ -45,3 +46,4 @@ class AirQuality(Base):
     pm10 = Column(Double, nullable=False)
     us_epa_index = Column(Integer, nullable=False)
     gb_defra_index = Column(Integer, nullable=False)
+    go_outside = Column(Boolean, nullable=False)

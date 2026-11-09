@@ -7,8 +7,12 @@ from weather import repository
 from weather.models import DIRECTIONS
 
 
+def wind_is_safe(speed, gust):
+    return speed <= 36 and gust <= 50
 
 
+def air_is_safe(epa, defra):
+    return epa <= 2 and defra <= 3
 
 
 def number(row, name, integer=False, nonnegative=True):
@@ -51,6 +55,8 @@ def parse(row):
     air["gb_defra_index"] = number(row, "air_quality_gb_defra_index", integer=True)
     if not 1 <= air["us_epa_index"] <= 6 or not 1 <= air["gb_defra_index"] <= 10:
         raise ValueError("Індекс EPA має бути 1–6, DEFRA — 1–10")
+    wind["go_outside"] = wind_is_safe(wind["wind_kph"], wind["gust_kph"])
+    air["go_outside"] = air_is_safe(air["us_epa_index"], air["gb_defra_index"])
     return weather, wind, air
 
 

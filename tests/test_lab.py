@@ -72,6 +72,13 @@ def test_import_migrations_and_rollback(url):
 
 
 
+def test_rules():
+    assert services.wind_is_safe(36, 50)
+    assert not services.wind_is_safe(37, 50)
+    assert not services.wind_is_safe(36, 51)
+    assert services.air_is_safe(2, 3)
+    assert not services.air_is_safe(3, 3)
+    assert not services.air_is_safe(2, 4)
 
 
 def test_dataset_headers():
