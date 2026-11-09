@@ -1,7 +1,9 @@
 """Шар даних: збереження, пошук і копіювання таблиць."""
+from datetime import datetime, timedelta
 from itertools import islice
 
 from sqlalchemy import MetaData, Table, func, select
+from sqlalchemy.orm import Session
 
 from weather.models import AirQuality, Weather, Wind
 
@@ -43,6 +45,19 @@ def save(db, rows, initial=False):
     return count
 
 
+def find(db, country, day):
+    start = datetime.combine(day, datetime.min.time())
+    query = (
+        select(Weather, Wind, AirQuality)
+        .join(Wind, Weather.id == Wind.weather_id)
+        .join(AirQuality, Weather.id == AirQuality.weather_id)
+        .where(Weather.country == country,
+               Weather.last_updated >= start,
+               Weather.last_updated < start + timedelta(days=1))
+        .order_by(Weather.id)
+    )
+    with Session(db) as session:
+        return session.execute(query).all()
 
 
 

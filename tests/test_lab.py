@@ -58,6 +58,12 @@ def test_import_migrations_and_rollback(url):
         assert services.import_csv(db, ROOT / "data/GlobalWeatherRepository.csv", initial=True) == dataset_count()
         before = flat_rows(db)
         migrate(db, "head")
+        first = before[0]
+        rows = repository.find(db, first["country"], first["last_updated"].date())
+        assert rows
+        for weather, wind, air in rows:
+            assert wind.go_outside == services.wind_is_safe(wind.wind_kph, wind.gust_kph)
+            assert air.go_outside == services.air_is_safe(air.us_epa_index, air.gb_defra_index)
         migrate(db, "001", down=True)
         assert flat_rows(db) == before
         reset(db)
