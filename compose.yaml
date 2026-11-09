@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: weather
+      POSTGRES_PASSWORD: local_weather
+      POSTGRES_DB: weather
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weather -d weather"]
+      interval: 2s
+      timeout: 5s
+      retries: 40
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: local_root
+      MYSQL_USER: weather
+      MYSQL_PASSWORD: local_weather
+      MYSQL_DATABASE: weather
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+volumes:
+  postgres_data:
+  mysql_data:
