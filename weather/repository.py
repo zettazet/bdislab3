@@ -60,5 +60,26 @@ def find(db, country, day):
         return session.execute(query).all()
 
 
+def read_tables(db):
+    with db.connect() as connection:
+        return [
+            [dict(row) for row in connection.execute(
+                select(table).order_by(list(table.primary_key)[0])
+            ).mappings()]
+            for table in TABLES
+        ]
 
 
+def copy(source, target):
+    data = read_tables(source)
+    with target.begin() as connection:
+        for table in TABLES:
+            if connection.scalar(select(func.count()).select_from(table)):
+                raise ValueError("Цільова база має бути порожньою")
+        for table, rows in zip(TABLES, data):
+            if rows:
+                for start in range(0, len(rows), 1000):
+                    connection.execute(table.insert(), rows[start:start + 1000])
+    if data != read_tables(target):
+        raise ValueError("Перенесені дані не збігаються з джерелом")
+    return len(data[0])

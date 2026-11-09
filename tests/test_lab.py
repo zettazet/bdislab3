@@ -76,6 +76,25 @@ def test_import_migrations_and_rollback(url):
         db.dispose()
 
 
+def test_transfer_both_directions():
+    postgres, mysql = [engine(url) for url in URLS]
+    try:
+        for db in [postgres, mysql]:
+            reset(db)
+            migrate(db, "head")
+        services.import_csv(postgres, ROOT / "data/GlobalWeatherRepository.csv")
+        assert repository.copy(postgres, mysql) == dataset_count()
+        assert repository.read_tables(postgres) == repository.read_tables(mysql)
+        with pytest.raises(ValueError):
+            repository.copy(postgres, mysql)
+        reset(postgres)
+        migrate(postgres, "head")
+        assert repository.copy(mysql, postgres) == dataset_count()
+        assert repository.read_tables(postgres) == repository.read_tables(mysql)
+    finally:
+        for db in [postgres, mysql]:
+            reset(db)
+            db.dispose()
 
 
 def test_rules():
@@ -96,3 +115,20 @@ def test_dataset_headers():
     assert air["pm2_5"] == float(row["air_quality_PM2.5"])
 
 
+def test_reset_after_interrupted_mysql_migration():
+    db = engine(URLS[1])
+    try:
+        reset(db)
+        migrate(db, "head")
+        migrate(db, "003", down=True)
+        # Імітуємо переривання після ADD COLUMN, до завершення downgrade.
+        with db.begin() as connection:
+            connection.exec_driver_sql(
+                "ALTER TABLE weather ADD COLUMN air_quality_carbon_monoxide DOUBLE"
+            )
+        reset(db)
+        migrate(db, "head")
+        assert repository.read_tables(db) == [[], [], []]
+    finally:
+        reset(db)
+        db.dispose()

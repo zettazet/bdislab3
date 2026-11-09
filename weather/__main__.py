@@ -18,6 +18,8 @@ def main():
     show = commands.add_parser("show")
     show.add_argument("country")
     show.add_argument("day", type=date.fromisoformat)
+    transfer = commands.add_parser("transfer")
+    transfer.add_argument("target", help="URL порожньої БД зі схемою 004")
     args = parser.parse_args()
     db = engine()
     try:
@@ -33,6 +35,12 @@ def main():
                 row["go_outside"] = wind.go_outside and air.go_outside
                 output.append(row)
             print(json.dumps(output, ensure_ascii=False, indent=2, default=str))
+        else:
+            target = engine(args.target)
+            try:
+                print("Перенесено спостережень:", repository.copy(db, target))
+            finally:
+                target.dispose()
     except (ValueError, OSError, SQLAlchemyError) as error:
         parser.exit(1, f"Помилка: {error}\n")
     finally:
